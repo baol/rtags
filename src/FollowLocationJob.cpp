@@ -28,8 +28,10 @@ FollowLocationJob::FollowLocationJob(const Location &loc,
 int FollowLocationJob::execute()
 {
     const Symbol symbol = project()->findSymbol(location);
-    if (symbol.isNull())
+    if (symbol.isNull()) {
+        error() << "no symbol" << location;
         return 1;
+    }
 
     if (queryFlags() & QueryMessage::AllTargets) {
         const Set<String> usrs = project()->findTargetUsrs(location);
@@ -41,15 +43,20 @@ int FollowLocationJob::execute()
     }
 
     const auto target = project()->findTarget(symbol);
-    if (target.isNull())
+    if (target.isNull()) {
+        error() << "nil target" << location;
         return 1;
+    }
 
     if (symbol.usr == target.usr) {
+        error() << "same usr" << location;
         write(target.location);
         return 0;
     }
+    error() << "different usr\n" << symbol.usr << "\n" << target.usr;
 
     if (queryFlags() & QueryMessage::DeclarationOnly ? target.isDefinition() : !target.isDefinition()) {
+        error() << "not def";
         const auto other = project()->findTarget(target);
         if (!other.isNull() && other.usr == target.usr) {
             write(other.location);

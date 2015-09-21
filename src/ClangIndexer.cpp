@@ -766,7 +766,9 @@ bool ClangIndexer::handleReference(const CXCursor &cursor, CXCursorKind kind,
 {
     if (cursorPtr)
         *cursorPtr = 0;
-    // error() << "handleReference" << cursor << kind << location << ref;
+    const bool debug = location == "/Users/abakken/dev/rtags/src/ReferencesJob.cpp:166:5:";
+    if (debug)
+        error() << "handleReference" << cursor << kind << location << ref;
     const CXCursorKind refKind = clang_getCursorKind(ref);
     if (clang_isInvalid(refKind)) {
         return superclassTemplateMemberFunctionUgleHack(cursor, kind, location, ref, parent, cursorPtr);
@@ -787,6 +789,8 @@ bool ClangIndexer::handleReference(const CXCursor &cursor, CXCursorKind kind,
         // For constructors they happen to be the only thing we have that
         // actually refs the constructor and not the class so we have to keep
         // them for that.
+        if (debug)
+            printf("[%s:%d]: if (debug)\n", __FILE__, __LINE__); fflush(stdout);
         return false;
     }
 
@@ -798,6 +802,8 @@ bool ClangIndexer::handleReference(const CXCursor &cursor, CXCursorKind kind,
         //     // insert it, we'll hook up the target and references later
         //     return handleCursor(cursor, kind, location, cursorPtr);
         // }
+        if (debug)
+            printf("[%s:%d]: if (debug)\n", __FILE__, __LINE__); fflush(stdout);
         return false;
     }
 
@@ -818,16 +824,22 @@ bool ClangIndexer::handleReference(const CXCursor &cursor, CXCursorKind kind,
         if (refKind == CXCursor_FunctionDecl)
             break;
         if (refKind == CXCursor_Constructor || refKind == CXCursor_Destructor) {
-            if (isImplicit(ref))
+            if (isImplicit(ref)) {
+                if (debug)
+                    printf("[%s:%d]: if (debug)\n", __FILE__, __LINE__); fflush(stdout);
                 return false;
+            }
         } else {
             CXStringScope scope = clang_getCursorDisplayName(ref);
             const char *data = scope.data();
             if (data) {
                 const int len = strlen(data);
                 if (len > 8 && !strncmp(data, "operator", 8) && !isalnum(data[8]) && data[8] != '_') {
-                    if (isImplicit(ref))
+                    if (isImplicit(ref)) {
+                        if (debug)
+                            printf("[%s:%d]: if (debug)\n", __FILE__, __LINE__); fflush(stdout);
                         return false; // eat implicit operator calls
+                    }
                     isOperator = true;
                 }
             }
@@ -839,6 +851,8 @@ bool ClangIndexer::handleReference(const CXCursor &cursor, CXCursorKind kind,
 
     const String refUsr = usr(ref);
     if (refUsr.isEmpty()) {
+        if (debug)
+            printf("[%s:%d]: if (debug)\n", __FILE__, __LINE__); fflush(stdout);
         return false;
     }
 
@@ -874,8 +888,11 @@ bool ClangIndexer::handleReference(const CXCursor &cursor, CXCursorKind kind,
     // if they're not considered references
 
     if (!c.isNull()) {
-        if (RTags::isCursor(c.kind))
+        if (RTags::isCursor(c.kind)) {
+            if (debug)
+                printf("[%s:%d]: if (debug)\n", __FILE__, __LINE__); fflush(stdout);
             return true;
+        }
         auto best = targets.end();
         int bestRank = -1;
         for (auto it = targets.begin(); it != targets.end(); ++it) {
@@ -886,6 +903,8 @@ bool ClangIndexer::handleReference(const CXCursor &cursor, CXCursorKind kind,
             }
         }
         if (best != targets.end() && best->first != refUsr) { // another target is better
+            if (debug)
+                printf("[%s:%d]: if (debug)\n", __FILE__, __LINE__); fflush(stdout);
             return true;
         }
     }
@@ -930,9 +949,13 @@ bool ClangIndexer::handleReference(const CXCursor &cursor, CXCursorKind kind,
         unit(location)->symbols.remove(location);
         if (cursorPtr)
             *cursorPtr = 0;
+        if (debug)
+            printf("[%s:%d]: if (debug)\n", __FILE__, __LINE__); fflush(stdout);
         return false;
     }
     setType(c, clang_getCursorType(cursor));
+    if (debug)
+        printf("[%s:%d]: if (debug)\n", __FILE__, __LINE__); fflush(stdout);
 
     return true;
 }
@@ -1017,7 +1040,11 @@ void ClangIndexer::handleBaseClassSpecifier(const CXCursor &cursor)
 bool ClangIndexer::handleCursor(const CXCursor &cursor, CXCursorKind kind, const Location &location, Symbol **cursorPtr)
 {
     const String usr = ::usr(cursor);
-    // error() << "Got a cursor" << cursor;
+    if (location == "/Users/abakken/dev/rtags/src/QueryJob.cpp:115:16:" || location == "/Users/abakken/dev/rtags/src/QueryJob.h:79:10:") {
+        error() << "Got a cursor" << location;
+        error() << usr;
+        error() << RTags::eatString(clang_getCursorUSR(cursor));
+    }
     Symbol &c = unit(location)->symbols[location];
     if (cursorPtr)
         *cursorPtr = &c;

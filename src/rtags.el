@@ -1107,7 +1107,7 @@ to case differences."
   (set-text-properties (point-at-bol) (point-at-eol) (list 'rtags-ref-containing-function-location (caddr ref))))
 
 ;;;###autoload
-(defun rtags-references-tree () ;; Need to build an expandable tree based around rc -r [loc] --elisp
+(defun rtags-references-tree ()
   (interactive)
   (let ((ref-buffer (rtags-get-buffer "*RTags*"))
         (loc (rtags-current-location))

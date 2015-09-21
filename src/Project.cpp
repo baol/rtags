@@ -1469,10 +1469,14 @@ Symbol Project::findSymbol(const Location &location, int *index)
 Set<Symbol> Project::findTargets(const Symbol &symbol)
 {
     Set<Symbol> ret;
-    if (symbol.isNull())
+    if (symbol.isNull()) {
+        printf("[%s:%d]: if (symbol.isNull()) {\n", __FILE__, __LINE__); fflush(stdout);
         return ret;
-    if (symbol.isClass() && symbol.isDefinition())
+    }
+    if (symbol.isClass() && symbol.isDefinition()) {
+        printf("[%s:%d]: if (symbol.isClass() && symbol.isDefinition()) {\n", __FILE__, __LINE__); fflush(stdout);
         return ret;
+    }
 
     auto sameKind = [&symbol](CXCursorKind kind) {
         if (kind == symbol.kind)
@@ -1505,6 +1509,7 @@ Set<Symbol> Project::findTargets(const Symbol &symbol)
         // fall through
     default:
         for (const String &usr : findTargetUsrs(symbol.location)) {
+            error() << "usr" << usr;
             ret.unite(findByUsr(usr, symbol.location.fileId(), Project::ArgDependsOn));
         }
         break;
